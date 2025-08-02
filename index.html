@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecurePass - Password Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Authentication Container -->
+    <div id="auth-container" class="auth-container">
+        <!-- Login Form -->
+        <div id="login-form" class="auth-form active">
+            <div class="glass-card">
+                <h1>SecurePass</h1>
+                <h2>Login to Your Vault</h2>
+                <form id="loginForm">
+                    <div class="input-group">
+                        <input type="text" id="loginUsername" placeholder="Username" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="loginPassword" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+                <p class="auth-switch">
+                    Don't have an account? 
+                    <span id="showRegister" class="auth-link">Register here</span>
+                </p>
+                <div id="loginError" class="error-message"></div>
+            </div>
+        </div>
+
+        <!-- Register Form -->
+        <div id="register-form" class="auth-form">
+            <div class="glass-card">
+                <h1>SecurePass</h1>
+                <h2>Create Your Vault</h2>
+                <form id="registerForm">
+                    <div class="input-group">
+                        <input type="text" id="registerUsername" placeholder="Choose Username" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="registerPassword" placeholder="Create Strong Password" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                </form>
+                <p class="auth-switch">
+                    Already have an account? 
+                    <span id="showLogin" class="auth-link">Login here</span>
+                </p>
+                <div id="registerError" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Manager Container -->
+    <div id="app-container" class="app-container hidden">
+        <header class="app-header">
+            <div class="header-content">
+                <h1>SecurePass</h1>
+                <div class="user-info">
+                    <span id="currentUser"></span>
+                    <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Add Password Form -->
+            <section class="add-password-section">
+                <div class="glass-card">
+                    <h2>Add New Password</h2>
+                    <form id="passwordForm">
+                        <div class="input-group">
+                            <input type="text" id="websiteName" placeholder="Website Name (e.g., Gmail, Facebook)" required>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="username" placeholder="Username or Email" required>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="password" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Password</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Password List Section -->
+            <section class="password-list-section">
+                <div class="glass-card">
+                    <div class="list-header">
+                        <h2>Your Passwords</h2>
+                        <div class="list-controls">
+                            <button id="selectAllBtn" class="btn btn-secondary">Select All</button>
+                            <button id="deleteSelectedBtn" class="btn btn-danger" disabled>Delete Selected</button>
+                        </div>
+                    </div>
+                    <div id="passwordList" class="password-list">
+                        <div class="empty-state">
+                            <p>No passwords saved yet. Add your first password above!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
