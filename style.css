@@ -298,6 +298,7 @@ form .btn {
 /* Password List */
 .password-list {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: 1rem;
 }
 
@@ -503,6 +504,11 @@ form .btn {
     
     .password-field {
         min-width: auto;
+    }
+    
+    /* Stack password items in single column on mobile */
+    .password-list {
+        grid-template-columns: 1fr;
     }
 }
 

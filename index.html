@@ -27,6 +27,9 @@
                     Don't have an account? 
                     <span id="showRegister" class="auth-link">Register here</span>
                 </p>
+                <p class="auth-switch">
+                    <span id="showForgotPassword" class="auth-link">Forgot your password?</span>
+                </p>
                 <div id="loginError" class="error-message"></div>
             </div>
         </div>
@@ -53,6 +56,31 @@
                     <span id="showLogin" class="auth-link">Login here</span>
                 </p>
                 <div id="registerError" class="error-message"></div>
+            </div>
+        </div>
+
+        <!-- Forgot Password Form -->
+        <div id="forgot-password-form" class="auth-form">
+            <div class="glass-card">
+                <h1>SecurePass</h1>
+                <h2>Reset Your Password</h2>
+                <form id="forgotPasswordForm">
+                    <div class="input-group">
+                        <input type="text" id="forgotUsername" placeholder="Enter your username" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="newPassword" placeholder="New Password" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="confirmNewPassword" placeholder="Confirm New Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Reset Password</button>
+                </form>
+                <p class="auth-switch">
+                    Remember your password? 
+                    <span id="backToLogin" class="auth-link">Login here</span>
+                </p>
+                <div id="forgotPasswordError" class="error-message"></div>
             </div>
         </div>
     </div>
@@ -86,6 +114,7 @@
                         </div>
                         <button type="submit" class="btn btn-primary">Save Password</button>
                     </form>
+                    <div id="passwordError" class="error-message"></div>
                 </div>
             </section>
 

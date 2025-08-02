@@ -19,6 +19,7 @@ Preferred communication style: Simple, everyday language.
 - **Multi-User Support**: Allows multiple users to create accounts and maintain separate password vaults
 - **Session Persistence**: Maintains login state using localStorage to remember current user
 - **Password Security**: Enforces strong password requirements with validation rules
+- **Password Reset**: Forgot password functionality allowing users to reset their password with username verification
 
 ## Data Storage
 - **localStorage API**: All user data and passwords stored in browser's localStorage
@@ -40,9 +41,11 @@ Preferred communication style: Simple, everyday language.
 
 ## Core Features
 - **Password Management**: Add, view, copy, and delete password entries
+- **Duplicate Prevention**: Prevents saving duplicate passwords for same website and username combination
 - **Bulk Operations**: Select multiple passwords for batch deletion
 - **Clipboard Integration**: One-click copying using Navigator Clipboard API with fallback
 - **Form Validation**: Real-time validation for registration and password entry forms
+- **Responsive Grid Layout**: Displays passwords in two-column grid on desktop, single column on mobile
 
 # External Dependencies
 

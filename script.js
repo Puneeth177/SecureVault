@@ -22,8 +22,11 @@ class SecurePass {
         // Authentication events
         document.getElementById('loginForm').addEventListener('submit', (e) => this.handleLogin(e));
         document.getElementById('registerForm').addEventListener('submit', (e) => this.handleRegister(e));
+        document.getElementById('forgotPasswordForm').addEventListener('submit', (e) => this.handleForgotPassword(e));
         document.getElementById('showRegister').addEventListener('click', () => this.showRegisterForm());
         document.getElementById('showLogin').addEventListener('click', () => this.showLoginForm());
+        document.getElementById('showForgotPassword').addEventListener('click', () => this.showForgotPasswordForm());
+        document.getElementById('backToLogin').addEventListener('click', () => this.showLoginForm());
         document.getElementById('logoutBtn').addEventListener('click', () => this.handleLogout());
 
         // Password management events
@@ -195,9 +198,23 @@ class SecurePass {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value.trim();
         
+        // Clear previous errors
+        this.hideError('passwordError');
+        
         // Validate input
         if (!websiteName || !username || !password) {
             this.showError('passwordError', 'Please fill in all fields.');
+            return;
+        }
+        
+        // Check for duplicate entries (same website and username)
+        const existingPassword = this.passwords.find(p => 
+            p.website.toLowerCase() === websiteName.toLowerCase() && 
+            p.username.toLowerCase() === username.toLowerCase()
+        );
+        
+        if (existingPassword) {
+            this.showError('passwordError', `A password for ${websiteName} with username ${username} already exists. Please update the existing entry or use a different username.`);
             return;
         }
         
@@ -424,14 +441,72 @@ class SecurePass {
     showLoginForm() {
         document.getElementById('login-form').classList.add('active');
         document.getElementById('register-form').classList.remove('active');
+        document.getElementById('forgot-password-form').classList.remove('active');
         this.hideError('registerError');
+        this.hideError('forgotPasswordError');
+    }
+
+    // Handle forgot password
+    handleForgotPassword(event) {
+        event.preventDefault();
+        
+        const username = document.getElementById('forgotUsername').value.trim();
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+        
+        // Clear previous errors
+        this.hideError('forgotPasswordError');
+        
+        // Validate input
+        if (!username || !newPassword || !confirmNewPassword) {
+            this.showError('forgotPasswordError', 'Please fill in all fields.');
+            return;
+        }
+        
+        // Check if user exists
+        if (!this.users[username]) {
+            this.showError('forgotPasswordError', 'Username not found. Please check your username or register a new account.');
+            return;
+        }
+        
+        if (newPassword !== confirmNewPassword) {
+            this.showError('forgotPasswordError', 'Passwords do not match.');
+            return;
+        }
+        
+        const passwordValidation = this.validatePassword(newPassword);
+        if (!passwordValidation.valid) {
+            this.showError('forgotPasswordError', passwordValidation.message);
+            return;
+        }
+        
+        // Update user's password
+        this.users[username].password = newPassword;
+        this.saveUsers();
+        
+        this.showSuccess('Password reset successfully! You can now login with your new password.');
+        
+        // Clear form and switch to login
+        document.getElementById('forgotPasswordForm').reset();
+        setTimeout(() => this.showLoginForm(), 2000);
     }
 
     // Show register form
     showRegisterForm() {
         document.getElementById('register-form').classList.add('active');
         document.getElementById('login-form').classList.remove('active');
+        document.getElementById('forgot-password-form').classList.remove('active');
         this.hideError('loginError');
+        this.hideError('forgotPasswordError');
+    }
+    
+    // Show forgot password form
+    showForgotPasswordForm() {
+        document.getElementById('forgot-password-form').classList.add('active');
+        document.getElementById('login-form').classList.remove('active');
+        document.getElementById('register-form').classList.remove('active');
+        this.hideError('loginError');
+        this.hideError('registerError');
     }
 
     // Show error message
