@@ -453,8 +453,6 @@ class SecurePass {
         document.getElementById('app-container').classList.remove('hidden');
         document.getElementById('currentUser').textContent = this.currentUser;
         this.renderPasswordList();
-        // Ensure bulk operation buttons are properly initialized
-        this.updateBulkOperationButtons();
     }
 
     // Show login form
