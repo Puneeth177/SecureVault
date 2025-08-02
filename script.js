@@ -524,34 +524,35 @@ class SecurePass {
 
     // Show success message
     showSuccess(message) {
-        // Remove any existing success messages
-        const existingSuccess = document.querySelector('.success-message');
-        if (existingSuccess) {
-            existingSuccess.remove();
-        }
-        
         // Create and show new success message
         const successElement = document.createElement('div');
         successElement.className = 'success-message show';
         successElement.textContent = message;
         
-        // Add to the current form or main area
+        // Add to appropriate area
         if (document.getElementById('auth-container').style.display !== 'none') {
+            // For authentication pages, add to active form
             const activeForm = document.querySelector('.auth-form.active .glass-card');
             if (activeForm) {
+                // Remove any existing success messages in the form
+                const existingSuccess = activeForm.querySelector('.success-message');
+                if (existingSuccess) {
+                    existingSuccess.remove();
+                }
                 activeForm.appendChild(successElement);
             }
         } else {
-            const mainContent = document.querySelector('.main-content');
-            if (mainContent) {
-                mainContent.insertBefore(successElement, mainContent.firstChild);
+            // For main app, use fixed position success area
+            const successArea = document.getElementById('successMessageArea');
+            if (successArea) {
+                successArea.appendChild(successElement);
             }
         }
         
         // Auto-hide after 3 seconds
         setTimeout(() => {
             successElement.classList.remove('show');
-            setTimeout(() => successElement.remove(), 300);
+            setTimeout(() => successElement.remove(), 400);
         }, 3000);
     }
 
