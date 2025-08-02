@@ -360,6 +360,21 @@ class SecurePass {
         }
     }
 
+    // Update bulk operation buttons based on password count
+    updateBulkOperationButtons() {
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        
+        if (this.passwords.length === 0) {
+            selectAllBtn.disabled = true;
+            deleteSelectedBtn.disabled = true;
+            deleteSelectedBtn.textContent = 'Delete Selected (0)';
+        } else {
+            selectAllBtn.disabled = false;
+            // deleteSelectedBtn state is handled by updateDeleteButton
+        }
+    }
+
     // Update selected item styling
     updateSelectedItems() {
         document.querySelectorAll('.password-item').forEach(item => {
@@ -382,6 +397,8 @@ class SecurePass {
                     <p>No passwords saved yet. Add your first password above!</p>
                 </div>
             `;
+            // Disable bulk operation buttons when no passwords exist
+            this.updateBulkOperationButtons();
             return;
         }
         
@@ -421,6 +438,7 @@ class SecurePass {
         // Update button states
         this.updateDeleteButton();
         this.updateSelectAllButton();
+        this.updateBulkOperationButtons();
     }
 
     // Show authentication form
@@ -435,6 +453,8 @@ class SecurePass {
         document.getElementById('app-container').classList.remove('hidden');
         document.getElementById('currentUser').textContent = this.currentUser;
         this.renderPasswordList();
+        // Ensure bulk operation buttons are properly initialized
+        this.updateBulkOperationButtons();
     }
 
     // Show login form
