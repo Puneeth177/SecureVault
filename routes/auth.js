@@ -53,49 +53,79 @@ router.post('/register', authRateLimit, registerValidation, asyncHandler(async (
     
     const { username, email, password } = req.body;
     
-    // Check if user was previously deleted
-    const deletedUser = await DeletedUser.wasDeleted(username) || await DeletedUser.wasDeleted(email);
-    
-    // Create new user
-    const user = new User({
-        username,
-        email,
-        password
-    });
-    
-    await user.save();
-    
-    // If user was previously deleted, create restoration record and remove from deleted users
-    if (deletedUser) {
-        await RestoredUser.createFromDeletion(user, deletedUser, 'self_registration');
-        await DeletedUser.deleteOne({ _id: deletedUser._id });
+    try {
+        // Check if username or email already exists in active users
+        const existingUser = await User.findOne({
+            $or: [
+                { username: username },
+                { email: email.toLowerCase() }
+            ],
+            isActive: true
+        });
         
-        console.log(`🔄 User restored from deletion: ${username} (${email})`);
-    }
-    
-    // Generate tokens
-    const token = generateToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
-    
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save({ validateBeforeSave: false });
-    
-    res.status(201).json({
-        success: true,
-        message: 'User registered successfully',
-        data: {
-            user: {
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                isAdmin: user.isAdmin,
-                createdAt: user.createdAt
-            },
-            token,
-            refreshToken
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                message: 'Username or email already exists'
+            });
         }
-    });
+        
+        // Check if user was previously deleted
+        const deletedUser = await DeletedUser.wasDeleted(username) || await DeletedUser.wasDeleted(email);
+        
+        // Create new user
+        const user = new User({
+            username,
+            email,
+            password
+        });
+        
+        await user.save();
+        
+        // If user was previously deleted, create restoration record and remove from deleted users
+        if (deletedUser) {
+            await RestoredUser.createFromDeletion(user, deletedUser, 'self_registration');
+            await DeletedUser.deleteOne({ _id: deletedUser._id });
+            
+            console.log(`🔄 User restored from deletion: ${username} (${email})`);
+        }
+        
+        // Generate tokens
+        const token = generateToken(user._id);
+        const refreshToken = generateRefreshToken(user._id);
+        
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save({ validateBeforeSave: false });
+        
+        res.status(201).json({
+            success: true,
+            message: 'User registered successfully',
+            data: {
+                user: {
+                    id: user._id,
+                    username: user.username,
+                    email: user.email,
+                    isAdmin: user.isAdmin,
+                    createdAt: user.createdAt
+                },
+                token,
+                refreshToken
+            }
+        });
+    } catch (error) {
+        // Handle duplicate key errors
+        if (error.code === 11000) {
+            const duplicateField = Object.keys(error.keyPattern)[0];
+            return res.status(400).json({
+                success: false,
+                message: `${duplicateField.charAt(0).toUpperCase() + duplicateField.slice(1)} already exists`
+            });
+        }
+        
+        // Re-throw other errors
+        throw error;
+    }
 }));
 
 /**

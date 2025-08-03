@@ -703,20 +703,25 @@ class SecureVaultApp {
     }
 
     showSuccess(message) {
-        // Create or get success message element
-        let successElement = document.getElementById('globalSuccessMessage');
-        if (!successElement) {
-            successElement = document.createElement('div');
-            successElement.id = 'globalSuccessMessage';
-            successElement.className = 'success-message';
-            document.body.appendChild(successElement);
+        // Get or create the success message area
+        let successArea = document.querySelector('.success-message-area');
+        if (!successArea) {
+            successArea = document.createElement('div');
+            successArea.className = 'success-message-area';
+            document.body.appendChild(successArea);
         }
         
+        // Create success message element
+        const successElement = document.createElement('div');
+        successElement.className = 'success-message show';
         successElement.textContent = message;
-        successElement.style.display = 'block';
+        successArea.appendChild(successElement);
         
+        // Remove the message after 3 seconds
         setTimeout(() => {
-            successElement.style.display = 'none';
+            if (successElement.parentNode) {
+                successElement.parentNode.removeChild(successElement);
+            }
         }, 3000);
     }
 
@@ -982,10 +987,10 @@ class SecureVaultApp {
                     <div class="users-section-header">
                         <h3>👥 All Registered Users</h3>
                         <div class="bulk-user-controls">
-                            <button class="btn btn-secondary btn-small" onclick="app.adminSelectAllUsers()">
+                            <button class="btn btn-secondary btn-small" id="adminSelectAllBtn">
                                 <span id="adminSelectAllText">Select All</span>
                             </button>
-                            <button class="btn btn-danger btn-small" id="adminDeleteSelectedBtn" onclick="app.adminDeleteSelectedUsers()" disabled>
+                            <button class="btn btn-danger btn-small" id="adminDeleteSelectedBtn" disabled>
                                 🗑️ Delete Selected (<span id="adminSelectedCount">0</span>)
                             </button>
                         </div>
@@ -995,7 +1000,7 @@ class SecureVaultApp {
                             <thead>
                                 <tr>
                                     <th class="select-column">
-                                        <input type="checkbox" id="adminSelectAllCheckbox" onchange="app.adminToggleSelectAll()" />
+                                        <input type="checkbox" id="adminSelectAllCheckbox" />
                                     </th>
                                     <th>Username</th>
                                     <th>Email</th>
@@ -1011,7 +1016,7 @@ class SecureVaultApp {
                                         <td class="select-cell">
                                             ${user.id === this.currentUser.id ? 
                                                 '<span class="select-disabled">—</span>' : 
-                                                `<input type="checkbox" class="admin-user-checkbox" value="${user.id}" onchange="app.adminUpdateSelection()" />`
+                                                `<input type="checkbox" class="admin-user-checkbox" value="${user._id || user.id}" />`
                                             }
                                         </td>
                                         <td class="username-cell">
@@ -1029,10 +1034,10 @@ class SecureVaultApp {
                                             ${user.id === this.currentUser.id ?
                                                 '<span class="action-disabled">Cannot modify self</span>' :
                                                 `<div class="user-actions-container">
-                                                    <button class="btn-small ${user.isAdmin ? 'btn-warning' : 'btn-info'}" onclick="app.adminToggleAdminStatus('${user.id}')">
+                                                    <button class="btn-small ${user.isAdmin ? 'btn-warning' : 'btn-info'}" data-user-id="${user._id || user.id}" data-action="toggle-admin">
                                                         ${user.isAdmin ? 'Revoke Admin' : 'Make Admin'}
                                                     </button>
-                                                    <button class="btn-small btn-danger" onclick="app.adminDeleteUser('${user.id}')">
+                                                    <button class="btn-small btn-danger" data-user-id="${user._id || user.id}" data-action="delete-user">
                                                         🗑️ Delete
                                                     </button>
                                                 </div>`
@@ -1075,7 +1080,7 @@ class SecureVaultApp {
                             </table>
                         </div>
                         <div class="deleted-users-actions">
-                            <button class="btn btn-warning btn-small" onclick="app.clearDeletedUsersHistory()">
+                            <button class="btn btn-warning btn-small" id="clearDeletedUsersBtn">
                                 🗑️ Clear History
                             </button>
                             <small>Showing last 10 deleted users</small>
@@ -1111,7 +1116,7 @@ class SecureVaultApp {
                             </table>
                         </div>
                         <div class="restored-users-actions">
-                            <button class="btn btn-info btn-small" onclick="app.clearRestoredUsersHistory()">
+                            <button class="btn btn-info btn-small" id="clearRestoredUsersBtn">
                                 🗑️ Clear History
                             </button>
                             <small>Showing last 10 restored users</small>
@@ -1121,15 +1126,32 @@ class SecureVaultApp {
                 
                 <!-- Admin Actions -->
                 <div class="admin-actions">
-                    <button class="btn btn-secondary" onclick="app.hideAdminPanel()">Close Admin Panel</button>
+                    <button class="btn btn-secondary" id="closeAdminPanelBtn">Close Admin Panel</button>
                 </div>
             </div>
         `;
         
         document.body.appendChild(adminPanel);
+        
+        // Bind event listeners for the admin panel
+        this.bindAdminPanelEvents();
     }
 
     async adminDeleteUser(userId) {
+        // Validate that the userId is a valid MongoDB ObjectID (24-character hex string)
+        const isValidId = (id) => typeof id === 'string' && id.length === 24 && /^[0-9a-fA-F]{24}$/.test(id);
+        
+        if (!isValidId(userId)) {
+            alert(`❌ Invalid user ID: ${userId}. Please refresh the admin panel and try again.`);
+            return;
+        }
+        
+        // Prevent users from deleting themselves
+        if (userId === this.currentUser.id || userId === this.currentUser._id) {
+            alert('❌ You cannot delete your own account.');
+            return;
+        }
+        
         const confirmation = confirm('⚠️ Are you sure you want to delete this user?\n\nThis action cannot be undone and will delete all their passwords.');
         if (!confirmation) return;
         
@@ -1142,6 +1164,8 @@ class SecureVaultApp {
                 alert('✅ User deleted successfully.');
                 this.hideAdminPanel();
                 setTimeout(() => this.showAdminPanel(), 100);
+            } else {
+                alert(`❌ Failed to delete user: ${response.message}`);
             }
         } catch (error) {
             alert(`❌ Failed to delete user: ${error.message}`);
@@ -1152,9 +1176,35 @@ class SecureVaultApp {
         const selectedCheckboxes = document.querySelectorAll('.admin-user-checkbox:checked');
         const selectedUserIds = Array.from(selectedCheckboxes).map(cb => cb.value);
         
+        // Debug logging to see what IDs we're getting
+        console.log('Selected user IDs:', selectedUserIds);
+        
         if (selectedUserIds.length === 0) {
             alert('❌ No users selected for deletion.');
             return;
+        }
+        
+        // Validate that all IDs are valid MongoDB ObjectIDs (24-character hex strings)
+        const isValidId = (id) => typeof id === 'string' && id.length === 24 && /^[0-9a-fA-F]{24}$/.test(id);
+        const invalidIds = selectedUserIds.filter(id => !isValidId(id));
+        
+        if (invalidIds.length > 0) {
+            alert(`❌ Invalid user IDs detected: ${invalidIds.join(', ')}. Please refresh the admin panel and try again.`);
+            return;
+        }
+        
+        // Prevent users from deleting themselves
+        const selfDeletionAttempt = selectedUserIds.includes(this.currentUser.id) || selectedUserIds.includes(this.currentUser._id);
+        if (selfDeletionAttempt) {
+            alert('❌ You cannot delete your own account. Your account has been removed from the selection.');
+            // Remove self from the list
+            const filteredUserIds = selectedUserIds.filter(id => id !== this.currentUser.id && id !== this.currentUser._id);
+            if (filteredUserIds.length === 0) {
+                alert('❌ No valid users to delete.');
+                return;
+            }
+            // Update the selectedUserIds array
+            selectedUserIds = filteredUserIds;
         }
         
         const confirmation = confirm(`⚠️ Are you sure you want to delete ${selectedUserIds.length} user(s)?\n\nThis action cannot be undone and will delete all their passwords.`);
@@ -1170,9 +1220,17 @@ class SecureVaultApp {
                 alert(`✅ Successfully deleted ${response.data.deletedCount} user(s).`);
                 this.hideAdminPanel();
                 setTimeout(() => this.showAdminPanel(), 100);
+            } else {
+                alert(`❌ Failed to delete users: ${response.message}`);
             }
         } catch (error) {
-            alert(`❌ Failed to delete users: ${error.message}`);
+            console.error('Delete users error:', error);
+            if (error.message === 'Validation failed' && error.errors && error.errors.length > 0) {
+                const errorMessages = error.errors.map(err => err.message).join(', ');
+                alert(`❌ Failed to delete users: Validation failed - ${errorMessages}`);
+            } else {
+                alert(`❌ Failed to delete users: ${error.message}`);
+            }
         }
     }
 
@@ -1215,6 +1273,14 @@ class SecureVaultApp {
     }
 
     async adminToggleAdminStatus(userId) {
+        // Validate that the userId is a valid MongoDB ObjectID (24-character hex string)
+        const isValidId = (id) => typeof id === 'string' && id.length === 24 && /^[0-9a-fA-F]{24}$/.test(id);
+        
+        if (!isValidId(userId)) {
+            alert(`❌ Invalid user ID: ${userId}. Please refresh the admin panel and try again.`);
+            return;
+        }
+        
         const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
         const username = userRow.querySelector('.username-cell strong').textContent;
         const isCurrentlyAdmin = userRow.querySelector('.admin-badge') !== null;
@@ -1247,6 +1313,13 @@ class SecureVaultApp {
         const selectedCountSpan = document.getElementById('adminSelectedCount');
         const selectAllText = document.getElementById('adminSelectAllText');
         
+        // Debug logging to see what's happening with selection updates
+        console.log('Selection updated:', {
+            totalCheckboxes: checkboxes.length,
+            selectedCheckboxes: selectedCheckboxes.length,
+            selectedValues: Array.from(selectedCheckboxes).map(cb => cb.value)
+        });
+        
         const selectedCount = selectedCheckboxes.length;
         selectedCountSpan.textContent = selectedCount;
         deleteSelectedBtn.disabled = selectedCount === 0;
@@ -1269,8 +1342,18 @@ class SecureVaultApp {
         const selectAllCheckbox = document.getElementById('adminSelectAllCheckbox');
         const checkboxes = document.querySelectorAll('.admin-user-checkbox');
         
+        // Debug logging to see what's happening with select all
+        console.log('Select all toggled:', { 
+            checked: selectAllCheckbox.checked, 
+            checkboxCount: checkboxes.length 
+        });
+        
         checkboxes.forEach(checkbox => {
             checkbox.checked = selectAllCheckbox.checked;
+            console.log('Checkbox updated:', { 
+                value: checkbox.value, 
+                checked: checkbox.checked 
+            });
         });
         
         this.adminUpdateSelection();
@@ -1289,21 +1372,88 @@ class SecureVaultApp {
         }
     }
 
-    showSuccess(message) {
-        // Create or update success message element
-        let successElement = document.getElementById('globalSuccess');
-        if (!successElement) {
-            successElement = document.createElement('div');
-            successElement.id = 'globalSuccess';
-            successElement.className = 'success-message';
-            document.body.appendChild(successElement);
+    bindAdminPanelEvents() {
+        // Bind event listeners for admin panel buttons
+        const adminSelectAllBtn = document.getElementById('adminSelectAllBtn');
+        const adminSelectAllCheckbox = document.getElementById('adminSelectAllCheckbox');
+        const adminDeleteSelectedBtn = document.getElementById('adminDeleteSelectedBtn');
+        const clearDeletedUsersBtn = document.getElementById('clearDeletedUsersBtn');
+        const clearRestoredUsersBtn = document.getElementById('clearRestoredUsersBtn');
+        const closeAdminPanelBtn = document.getElementById('closeAdminPanelBtn');
+        
+        if (adminSelectAllBtn) {
+            adminSelectAllBtn.addEventListener('click', () => this.adminSelectAllUsers());
         }
         
-        successElement.textContent = message;
-        successElement.style.display = 'block';
+        if (adminSelectAllCheckbox) {
+            adminSelectAllCheckbox.addEventListener('change', () => this.adminToggleSelectAll());
+        }
         
+        if (adminDeleteSelectedBtn) {
+            adminDeleteSelectedBtn.addEventListener('click', () => this.adminDeleteSelectedUsers());
+        }
+        
+        if (clearDeletedUsersBtn) {
+            clearDeletedUsersBtn.addEventListener('click', () => this.clearDeletedUsersHistory());
+        }
+        
+        if (clearRestoredUsersBtn) {
+            clearRestoredUsersBtn.addEventListener('click', () => this.clearRestoredUsersHistory());
+        }
+        
+        if (closeAdminPanelBtn) {
+            closeAdminPanelBtn.addEventListener('click', () => this.hideAdminPanel());
+        }
+        
+        // Bind event listeners for user action buttons
+        const userActionButtons = document.querySelectorAll('.user-actions-container button');
+        userActionButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const userId = e.target.getAttribute('data-user-id');
+                const action = e.target.getAttribute('data-action');
+                
+                // Debug logging to see what IDs we're getting
+                console.log('Button clicked:', { userId, action });
+                
+                if (action === 'toggle-admin') {
+                    this.adminToggleAdminStatus(userId);
+                } else if (action === 'delete-user') {
+                    this.adminDeleteUser(userId);
+                }
+            });
+        });
+        
+        // Bind event listeners for user checkboxes
+        const adminUserCheckboxes = document.querySelectorAll('.admin-user-checkbox');
+        adminUserCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                // Debug logging to see what values we're getting
+                console.log('Checkbox changed:', { value: e.target.value, checked: e.target.checked });
+                this.adminUpdateSelection();
+            });
+        });
+    }
+
+    showSuccess(message) {
+        // Get or create the success message area
+        let successArea = document.querySelector('.success-message-area');
+        if (!successArea) {
+            successArea = document.createElement('div');
+            successArea.className = 'success-message-area';
+            document.body.appendChild(successArea);
+        }
+        
+        // Create success message element
+        const successElement = document.createElement('div');
+        successElement.className = 'success-message show';
+        successElement.textContent = message;
+        successArea.appendChild(successElement);
+        
+        // Remove the message after 3 seconds
         setTimeout(() => {
-            successElement.style.display = 'none';
+            if (successElement.parentNode) {
+                successElement.parentNode.removeChild(successElement);
+            }
         }, 3000);
     }
 

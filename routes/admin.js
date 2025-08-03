@@ -157,8 +157,12 @@ router.get('/users', [
     const usersWithPasswordCounts = await Promise.all(
         users.map(async (user) => {
             const passwordCount = await Password.countDocuments({ userId: user._id });
+            const userData = user.toJSON();
+            // Ensure _id is included (it should be, but let's be explicit)
+            userData._id = user._id.toString();
+            userData.id = user._id.toString();
             return {
-                ...user.toJSON(),
+                ...userData,
                 passwordCount,
                 isLocked: user.isLocked
             };
@@ -464,20 +468,22 @@ router.post('/users/:id/unlock', asyncHandler(async (req, res) => {
 router.post('/users/:id/toggle-admin', asyncHandler(async (req, res) => {
     const userId = req.params.id;
     
-    // Prevent admin from removing their own admin status
-    if (userId === req.user._id.toString()) {
-        return res.status(400).json({
-            success: false,
-            message: 'You cannot modify your own admin status'
-        });
-    }
-    
+    // Allow users to make themselves admin, but not remove their own admin status
+    const isSelf = userId === req.user._id.toString();
     const user = await User.findById(userId);
     
     if (!user || !user.isActive) {
         return res.status(404).json({
             success: false,
             message: 'User not found'
+        });
+    }
+    
+    // If user is trying to remove their own admin status, prevent it
+    if (isSelf && user.isAdmin) {
+        return res.status(400).json({
+            success: false,
+            message: 'You cannot remove your own admin status'
         });
     }
     
