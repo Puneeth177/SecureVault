@@ -195,12 +195,12 @@ const optionalAuth = async (req, res, next) => {
  * Rate limiting for authentication endpoints
  */
 const authRateLimit = require('express-rate-limit')({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 1 * 60 * 1000, // 1 minute
     max: 5, // limit each IP to 5 requests per windowMs for auth endpoints
     message: {
         success: false,
         message: 'Too many authentication attempts, please try again later.',
-        retryAfter: 15 * 60 // 15 minutes in seconds
+        retryAfter: 60 // 1 minute in seconds
     },
     standardHeaders: true,
     legacyHeaders: false,
