@@ -108,9 +108,21 @@ if (!isValidMongoURI(MONGODB_URI)) {
 
 // Validate that srv URIs do not contain a port, which is a common mistake.
 if (MONGODB_URI.startsWith('mongodb+srv://')) {
-    const hostPart = MONGODB_URI.split('/')[2] || '';
-    if (hostPart.includes(':')) {
+    // Find the part of the URI after the credentials (if any)
+    const atIndex = MONGODB_URI.indexOf('@');
+    const hostPartStartIndex = atIndex > -1 ? atIndex + 1 : MONGODB_URI.indexOf('//') + 2;
+    
+    // Find the end of the host part (before the path or options)
+    const hostPartEndIndex = MONGODB_URI.indexOf('/', hostPartStartIndex);
+    
+    // Extract the host string
+    const hostString = hostPartEndIndex > -1 
+        ? MONGODB_URI.substring(hostPartStartIndex, hostPartEndIndex)
+        : MONGODB_URI.substring(hostPartStartIndex);
+
+    if (hostString.includes(':')) {
         console.error('❌ FATAL ERROR: Invalid mongodb+srv URI. A port number cannot be specified in an srv connection string.');
+        console.error(`💡 Detected host part: ${hostString}`);
         process.exit(1);
     }
 }
