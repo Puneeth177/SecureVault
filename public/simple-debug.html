@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+        #result { margin-top: 20px; padding: 15px; border: 1px solid #ccc; background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>Simple Debug Test</h1>
+    
+    <button id="testBtn">🧪 Test Button</button>
+    <button id="healthBtn">🏥 Health Check</button>
+    
+    <div id="result">Click a button to test...</div>
+
+    <script>
+        console.log('Script loaded');
+        
+        function showResult(message) {
+            console.log('showResult called:', message);
+            document.getElementById('result').innerHTML = message;
+        }
+        
+        // Test basic functionality
+        document.getElementById('testBtn').addEventListener('click', function() {
+            console.log('Test button clicked');
+            showResult('✅ JavaScript is working!');
+        });
+        
+        // Test API call
+        document.getElementById('healthBtn').addEventListener('click', function() {
+            console.log('Health button clicked');
+            showResult('🔄 Checking server health...');
+            
+            fetch('/api/health')
+                .then(function(response) {
+                    console.log('Response received:', response.status);
+                    return response.json();
+                })
+                .then(function(data) {
+                    console.log('Data received:', data);
+                    showResult('✅ Server Health: ' + JSON.stringify(data, null, 2));
+                })
+                .catch(function(error) {
+                    console.log('Error occurred:', error);
+                    showResult('❌ Error: ' + error.message);
+                });
+        });
+        
+        console.log('Event listeners attached');
+    </script>
+</body>
+</html>

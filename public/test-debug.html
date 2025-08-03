@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+        .test-section { margin: 20px 0; padding: 15px; background: white; border-radius: 8px; }
+        .error { color: red; }
+        .success { color: green; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>SecureVault Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>API Health Check</h2>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="healthResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Registration Test</h2>
+        <button onclick="testRegistration()">Test Registration</button>
+        <div id="regResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Login Test</h2>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Console Logs</h2>
+        <div id="consoleLogs"></div>
+    </div>
+
+    <script>
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const logs = [];
+        
+        console.log = function(...args) {
+            logs.push({type: 'log', message: args.join(' ')});
+            updateConsoleLogs();
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            logs.push({type: 'error', message: args.join(' ')});
+            updateConsoleLogs();
+            originalError.apply(console, args);
+        };
+        
+        function updateConsoleLogs() {
+            const div = document.getElementById('consoleLogs');
+            div.innerHTML = logs.map(log => 
+                `<div class="${log.type}">${log.message}</div>`
+            ).join('');
+        }
+        
+        async function testHealth() {
+            const result = document.getElementById('healthResult');
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                result.innerHTML = `<div class="success">✅ Health check passed: ${JSON.stringify(data)}</div>`;
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Health check failed: ${error.message}</div>`;
+            }
+        }
+        
+        async function testRegistration() {
+            const result = document.getElementById('regResult');
+            const testUser = {
+                username: `testuser_${Date.now()}`,
+                email: `test_${Date.now()}@example.com`,
+                password: 'TestPassword123!'
+            };
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testUser)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `<div class="success">✅ Registration successful: ${JSON.stringify(data)}</div>`;
+                } else {
+                    result.innerHTML = `<div class="error">❌ Registration failed: ${JSON.stringify(data)}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Registration error: ${error.message}</div>`;
+            }
+        }
+        
+        async function testLogin() {
+            const result = document.getElementById('loginResult');
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        identifier: 'testuser_1754144850049',
+                        password: 'TestPassword123!'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `<div class="success">✅ Login successful: ${JSON.stringify(data)}</div>`;
+                } else {
+                    result.innerHTML = `<div class="error">❌ Login failed: ${JSON.stringify(data)}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Login error: ${error.message}</div>`;
+            }
+        }
+        
+        // Test health on page load
+        window.onload = function() {
+            testHealth();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureVault - Password Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Authentication Container -->
+    <div id="auth-container" class="auth-container">
+        <!-- Login Form -->
+        <div id="login-form" class="auth-form active">
+            <div class="glass-card">
+                <h1>SecureVault</h1>
+                <h2>Login to Your Vault</h2>
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label for="loginIdentifier">Username or Email</label>
+                        <input type="text" id="loginIdentifier" placeholder="Username or Email" required autocomplete="username">
+                    </div>
+                    <div class="input-group" style="position:relative;">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password" style="padding-right:2.5em;">
+                        <button type="button" id="loginPasswordToggle" class="icon-btn login-eye-btn" tabindex="-1" aria-label="Show password">👁️</button>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+                <p class="auth-switch">
+                    Don't have an account? 
+                    <span id="showRegister" class="auth-link">Register here</span>
+                </p>
+                <p class="auth-switch">
+                    <span id="showForgotPassword" class="auth-link">Forgot your password?</span>
+                </p>
+                <div id="loginError" class="error-message"></div>
+            </div>
+        </div>
+
+        <!-- Register Form -->
+        <div id="register-form" class="auth-form">
+            <div class="glass-card">
+                <h1>SecureVault</h1>
+                <h2>Create Your Vault</h2>
+                <form id="registerForm">
+                    <div class="input-group">
+                        <label for="registerUsername">Username</label>
+                        <input type="text" id="registerUsername" placeholder="Choose Username" required autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" placeholder="Enter Email" required autocomplete="email">
+                    </div>
+                    <div class="input-group" style="position:relative;">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" placeholder="Create Strong Password" required autocomplete="new-password" style="padding-right:2.5em;">
+                        <button type="button" id="registerPasswordToggle" class="icon-btn login-eye-btn" tabindex="-1" aria-label="Show password">👁️</button>
+                        <div class="password-requirements" id="passwordRequirements" style="display: none;">
+                            <small>Password must contain:</small>
+                            <ul>
+                                <li id="req-length">At least 8 characters</li>
+                                <li id="req-upper">One uppercase letter (A-Z)</li>
+                                <li id="req-lower">One lowercase letter (a-z)</li>
+                                <li id="req-number">One number (0-9)</li>
+                                <li id="req-special">One special character (@$!%*?&)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" placeholder="Confirm Password" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                </form>
+                <p class="auth-switch">
+                    Already have an account? 
+                    <span id="showLogin" class="auth-link">Login here</span>
+                </p>
+                <div id="registerError" class="error-message"></div>
+            </div>
+        </div>
+
+        <!-- Forgot Password Form -->
+        <div id="forgot-password-form" class="auth-form">
+            <div class="glass-card">
+                <h1>SecureVault</h1>
+                <h2>Reset Your Password</h2>
+                <form id="forgotPasswordForm">
+                    <div class="input-group">
+                        <label for="forgotUsername">Username</label>
+                        <input type="text" id="forgotUsername" placeholder="Enter your username" required autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label for="forgotEmail">Email</label>
+                        <input type="email" id="forgotEmail" placeholder="Enter your email" required autocomplete="email">
+                    </div>
+                    <!-- Removed OTP Section -->
+                    <div id="otpSection" style="display:none;">
+
+                    </div>
+                    <div id="newPasswordSection" style="display:block; position:relative;">
+                        <div class="input-group" style="position:relative;">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" placeholder="New Password" autocomplete="new-password" style="padding-right:2.5em;">
+                            <button type="button" id="newPasswordToggle" class="icon-btn login-eye-btn" tabindex="-1" aria-label="Show password">👁️</button>
+                        </div>
+                        <div class="input-group">
+                            <label for="confirmNewPassword">Confirm New Password</label>
+                            <input type="password" id="confirmNewPassword" placeholder="Confirm New Password" autocomplete="new-password">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Reset Password</button>
+                </form>
+                <p class="auth-switch">
+                    Remember your password? 
+                    <span id="backToLogin" class="auth-link">Login here</span>
+                </p>
+                <div id="forgotPasswordError" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Account Page -->
+    <div id="delete-account-page" style="display:none;">
+        <form id="deleteAccountForm" class="glass-card" style="max-width:400px; margin:auto;">
+            <h2>Delete Account</h2>
+            <div class="input-group">
+                <input type="text" id="deleteUsername" placeholder="Username" autocomplete="username" required>
+            </div>
+            <div class="input-group">
+                <input type="email" id="deleteEmail" placeholder="Email" autocomplete="email" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="deletePassword" placeholder="Password" autocomplete="current-password" required>
+            </div>
+            <div id="deleteAccountError" class="error-message"></div>
+            <button type="submit" class="btn btn-danger">Delete Account</button>
+            <button type="button" id="backToDashboard" class="btn btn-secondary" style="margin-top:1rem;">Back to Dashboard</button>
+        </form>
+    </div>
+
+    <!-- Password Manager Container -->
+    <div id="app-container" class="app-container hidden">
+        <header class="app-header">
+            <div class="header-content">
+                <h1>SecureVault</h1>
+                <div class="user-info">
+                    <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                        <span id="currentUser" style="font-weight:600;"></span>
+                        <span id="currentUserEmail" style="font-size:0.95em; color:rgba(255,255,255,0.8);"></span>
+                        <a id="showDeleteAccount" class="auth-link" style="margin-top:0.3em; font-size:0.95em; cursor:pointer;">Delete Account</a>
+                    </div>
+                    <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Success Message Area -->
+            <div id="successMessageArea" class="success-message-area"></div>
+            
+            <!-- Add Password Form -->
+            <section class="add-password-section">
+                <div class="glass-card">
+                    <h2>Add New Password</h2>
+                    <form id="passwordForm">
+                        <div class="input-group">
+                            <label for="websiteName">Website Name</label>
+                            <input type="text" id="websiteName" placeholder="Website Name (e.g., Gmail, Facebook)" required autocomplete="off">
+                        </div>
+                        <div class="input-group">
+                            <label for="username">Username or Email</label>
+                            <input type="text" id="username" placeholder="Username or Email" required autocomplete="off">
+                        </div>
+                        <div class="input-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" placeholder="Password" required autocomplete="off">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Password</button>
+                    </form>
+                    <div id="passwordError" class="error-message"></div>
+                </div>
+            </section>
+
+            <!-- Password List Section -->
+            <section class="password-list-section">
+                <div class="glass-card">
+                    <div class="list-header">
+                        <h2>Your Passwords</h2>
+                        <div class="list-controls">
+                            <div class="input-group" style="display: flex; align-items: center; gap: 0.5em;">
+                                <input type="text" id="searchPasswords" placeholder="Search passwords..." autocomplete="off" aria-label="Search passwords">
+                            </div>
+                            <button id="selectAllBtn" class="btn btn-secondary">Select All</button>
+                            <button id="deleteSelectedBtn" class="btn btn-danger" disabled>Delete Selected</button>
+                        </div>
+                    </div>
+                    <div id="passwordList" class="password-list">
+                        <div class="empty-state">
+                            <p>No passwords saved yet. Add your first password above!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

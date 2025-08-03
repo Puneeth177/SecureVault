@@ -21,6 +21,53 @@
     min-height: 1.2em;
     display: block;
 }
+
+/* Password Requirements */
+.password-requirements {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+    font-size: 0.85em;
+}
+
+.password-requirements small {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.password-requirements ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.password-requirements li {
+    padding: 2px 0;
+    color: rgba(255, 255, 255, 0.7);
+    position: relative;
+    padding-left: 20px;
+}
+
+.password-requirements li:before {
+    content: "✗";
+    position: absolute;
+    left: 0;
+    color: #ef5350;
+    font-weight: bold;
+}
+
+.password-requirements li.valid {
+    color: #1100fb;
+}
+
+.password-requirements li.valid:before {
+    content: "✓";
+    color: #1100fb;
+}
 /* Delete Account Page Centering */
 #delete-account-page {
     display: flex;
@@ -74,6 +121,42 @@
     background: rgba(255,255,255,0.1);
     color: #ffffff;
     transform: translateY(-50%) !important;
+}
+
+/* Register password field with requirements */
+#register-form .input-group {
+    position: relative;
+}
+
+#register-form .login-eye-btn {
+    position: absolute;
+    right: 1.2em;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25em;
+    color: #555;
+    z-index: 2;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    height: 2em;
+    width: 2em;
+}
+
+#register-form .login-eye-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: #ffffff;
+    transform: translateY(0%) !important;
+}
+
+/* Fix for eye icon positioning when password requirements are visible */
+#register-form .input-group:has(.password-requirements) .login-eye-btn {
+    position: absolute;
+    top: 1.75em;
+    transform: none;
 }
 /* Reset and Base Styles */
 * {
@@ -144,11 +227,9 @@ body::before {
 .auth-form {
     width: 100%;
     max-width: 400px;
-    display: none;
 }
 
 .auth-form.active {
-    display: block;
     animation: slideIn 0.5s ease-out;
 }
 
@@ -407,15 +488,95 @@ form .btn {
     gap: 1rem;
 }
 
-.password-info h3 {
+.password-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.password-details h4 {
     font-size: 1.2rem;
     color: #64b5f6;
     margin-bottom: 0.25rem;
+    margin: 0;
 }
 
-.password-info p {
+.password-details .username {
     color: rgba(255, 255, 255, 0.8);
     font-size: 0.9rem;
+    margin: 0;
+}
+
+.password-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #64b5f6;
+    cursor: pointer;
+}
+
+.password-meta {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.password-meta small {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.8rem;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    transform: scale(1.1);
+}
+
+.btn-icon.btn-danger:hover {
+    background: rgba(206, 30, 17, 0.3);
+    color: #f44336;
+}
+
+.btn-icon.btn-danger {
+    background: rgba(184, 30, 19, 0.2);
+    color: #f44336;
+}
+
+.btn-disabled {
+    opacity: 0.5;
+}
+
+.btn-disabled:hover {
+    transform: none !important;
+    background: none !important;
+}
+
+.delete-btn[data-disabled="true"]:hover::before {
+    content: '🚫';
+    position: absolute;
+    font-size: 1.1rem;
+}
+
+.delete-btn[data-disabled="true"]:hover {
+    color: transparent;
+}
+
+.delete-btn[data-disabled="true"] {
+    position: relative;
 }
 
 .password-actions {
