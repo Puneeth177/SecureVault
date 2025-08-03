@@ -142,6 +142,9 @@ const connectOptions = {
     w: 'majority'
 };
 
+// Mongoose 7+ best practice: prevent querying non-existent fields
+mongoose.set('strictQuery', true);
+
 mongoose.connect(MONGODB_URI, connectOptions)
 .then(() => {
     console.log('✅ Connected to MongoDB successfully');

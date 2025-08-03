@@ -1090,6 +1090,27 @@ form .btn {
     font-size: 0.8rem;
 }
 
+.admin-badge {
+    background: #ff9800;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.status-locked {
+    color: #f44336;
+    font-weight: 600;
+}
+
+.password-count-cell {
+    text-align: center;
+    font-weight: 600;
+    color: #64b5f6;
+}
+
 /* Admin Actions Section */
 .admin-actions-section {
     margin: 2rem 0;

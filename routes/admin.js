@@ -498,4 +498,39 @@ router.post('/users/:id/toggle-admin', asyncHandler(async (req, res) => {
     });
 }));
 
+/**
+ * @route   POST /api/admin/verify-password
+ * @desc    Verify admin's password before sensitive actions
+ * @access  Private (Admin only)
+ */
+router.post('/verify-password', [
+    body('password').notEmpty().withMessage('Password is required')
+], asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            success: false,
+            message: 'Validation failed',
+            errors: formatValidationErrors(errors)
+        });
+    }
+
+    const { password } = req.body;
+
+    // Get the user with the password field to compare
+    const adminUser = await User.findById(req.user._id).select('+password');
+
+    if (!adminUser) {
+        return res.status(404).json({ success: false, message: 'Admin user not found' });
+    }
+
+    const isPasswordValid = await adminUser.comparePassword(password);
+
+    if (!isPasswordValid) {
+        return res.status(401).json({ success: false, message: 'Incorrect password' });
+    }
+
+    res.json({ success: true, message: 'Password verified successfully' });
+}));
+
 module.exports = router;

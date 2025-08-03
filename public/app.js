@@ -892,30 +892,49 @@ class SecureVaultApp {
             alert('Access denied. Please log in first.');
             return;
         }
-        
-        if (!this.currentUser.isAdmin) {
-            alert('❌ Access denied. Admin privileges required.');
+
+        // Re-authenticate admin with password for security
+        const password = prompt('Please enter an admin password to access the admin panel:');
+        if (password === null) { // User clicked cancel
             return;
         }
-        
+        if (!password) {
+            alert('Password is required to continue.');
+            return;
+        }
+
+        const originalToken = this.token; // Store original token
         try {
-            // Get admin statistics
+            // Use the new public endpoint to verify admin password and get a temporary admin token
+            const verificationResponse = await this.apiCall('/auth/verify-admin', {
+                method: 'POST',
+                body: { password }
+            });
+
+            if (!verificationResponse.success) {
+                alert('❌ Incorrect password. Access denied.');
+                return;
+            }
+
+            // Temporarily use the admin token for subsequent requests
+            this.token = verificationResponse.data.adminToken;
+
+            // If password is correct, proceed to load admin data
             const statsResponse = await this.apiCall('/admin/stats');
             const usersResponse = await this.apiCall('/admin/users');
             const deletedUsersResponse = await this.apiCall('/admin/deleted-users');
             const restoredUsersResponse = await this.apiCall('/admin/restored-users');
-            
+
             if (statsResponse.success && usersResponse.success) {
-                this.renderAdminPanel(
-                    statsResponse.data,
-                    usersResponse.data.users,
-                    deletedUsersResponse.data?.deletedUsers || [],
-                    restoredUsersResponse.data?.restoredUsers || []
-                );
+                this.renderAdminPanel(statsResponse.data, usersResponse.data.users, deletedUsersResponse.data?.deletedUsers || [], restoredUsersResponse.data?.restoredUsers || []);
             }
         } catch (error) {
             console.error('Failed to load admin data:', error);
-            alert('Failed to load admin panel data.');
+            const errorMessage = error.message || 'Failed to load admin panel data.';
+            alert(errorMessage);
+        } finally {
+            // IMPORTANT: Restore the original user's token
+            this.token = originalToken;
         }
     }
 
@@ -1553,48 +1572,3 @@ class SecureVaultApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new SecureVaultApp();
 });
-
-// Add global styles for success messages
-const style = document.createElement('style');
-style.textContent = `
-    .success-message {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #4caf50;
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 10000;
-        display: none;
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    .admin-badge {
-        background: #ff9800;
-        color: white;
-        padding: 0.2rem 0.5rem;
-        border-radius: 12px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        margin-left: 0.5rem;
-    }
-    
-    .status-locked {
-        color: #f44336;
-        font-weight: 600;
-    }
-    
-    .password-count-cell {
-        text-align: center;
-        font-weight: 600;
-        color: #64b5f6;
-    }
-    
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-`;
-document.head.appendChild(style);

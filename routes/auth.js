@@ -426,4 +426,57 @@ router.post('/check-email', asyncHandler(async (req, res) => {
     });
 }));
 
+/**
+ * @route   POST /api/auth/verify-admin
+ * @desc    Verify a password against any admin account to get a temporary admin token
+ * @access  Public
+ */
+router.post('/verify-admin', authRateLimit, [
+    body('password').notEmpty().withMessage('Password is required')
+], asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            success: false,
+            message: 'Validation failed',
+            errors: formatValidationErrors(errors)
+        });
+    }
+
+    const { password } = req.body;
+
+    // Find all admin users
+    const adminUsers = await User.find({ isAdmin: true, isActive: true }).select('+password');
+
+    if (!adminUsers || adminUsers.length === 0) {
+        return res.status(403).json({ success: false, message: 'No admin accounts configured.' });
+    }
+
+    let passwordMatch = false;
+    let matchedAdmin = null;
+    for (const admin of adminUsers) {
+        const isMatch = await admin.comparePassword(password);
+        if (isMatch) {
+            passwordMatch = true;
+            matchedAdmin = admin;
+            break;
+        }
+    }
+
+    if (!passwordMatch) {
+        return res.status(401).json({ success: false, message: 'Incorrect admin password' });
+    }
+
+    // Generate a short-lived admin token (e.g., 5 minutes)
+    const adminToken = generateToken(matchedAdmin._id, '5m');
+
+    res.json({
+        success: true,
+        message: 'Admin password verified successfully.',
+        data: {
+            adminToken
+        }
+    });
+}));
+
 module.exports = router;
