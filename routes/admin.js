@@ -217,9 +217,8 @@ router.delete('/users/:id', asyncHandler(async (req, res) => {
     // Delete user's passwords
     await Password.deleteMany({ userId: user._id });
     
-    // Deactivate user (soft delete)
-    user.isActive = false;
-    await user.save();
+    // Delete user document from database
+    await User.deleteOne({ _id: user._id });
     
     res.json({
         success: true,
@@ -292,9 +291,8 @@ router.delete('/users', [
         // Delete user's passwords
         await Password.deleteMany({ userId: user._id });
         
-        // Deactivate user
-        user.isActive = false;
-        await user.save();
+        // Delete user document from database
+        await User.deleteOne({ _id: user._id });
         
         deletedCount++;
     }
