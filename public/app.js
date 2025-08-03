@@ -1134,7 +1134,7 @@ class SecureVaultApp {
         if (!confirmation) return;
         
         try {
-            const response = await this.apiCall(`/admin/users/${userId}`, {
+            const response = await this.apiAdminCall(`/admin/users/${userId}`, {
                 method: 'DELETE'
             });
             
@@ -1161,7 +1161,7 @@ class SecureVaultApp {
         if (!confirmation) return;
         
         try {
-            const response = await this.apiCall('/admin/users', {
+            const response = await this.apiAdminCall('/admin/users', {
                 method: 'DELETE',
                 body: { userIds: selectedUserIds }
             });
@@ -1181,7 +1181,7 @@ class SecureVaultApp {
         if (!confirmation) return;
         
         try {
-            const response = await this.apiCall('/admin/deleted-users', {
+            const response = await this.apiAdminCall('/admin/deleted-users', {
                 method: 'DELETE'
             });
             
@@ -1200,7 +1200,7 @@ class SecureVaultApp {
         if (!confirmation) return;
         
         try {
-            const response = await this.apiCall('/admin/restored-users', {
+            const response = await this.apiAdminCall('/admin/restored-users', {
                 method: 'DELETE'
             });
             
@@ -1224,7 +1224,7 @@ class SecureVaultApp {
         if (!confirmation) return;
 
         try {
-            const response = await this.apiCall(`/admin/users/${userId}/toggle-admin`, {
+            const response = await this.apiAdminCall(`/admin/users/${userId}/toggle-admin`, {
                 method: 'POST'
             });
 
