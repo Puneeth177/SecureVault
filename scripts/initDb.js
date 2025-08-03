@@ -16,7 +16,7 @@ async function initializeDatabase() {
             // Create default admin user
             const adminUser = new User({
                 username: 'admin',
-                email: 'admin@securevault.local',
+                email: 'admin@securevault.example.com',
                 password: process.env.ADMIN_PASSWORD || 'SecureVault2024!',
                 isAdmin: true
             });
@@ -24,7 +24,7 @@ async function initializeDatabase() {
             await adminUser.save();
             console.log('✅ Default admin user created');
             console.log('   Username: admin');
-            console.log('   Email: admin@securevault.local');
+            console.log('   Email: admin@securevault.example.com');
             console.log('   Password: SecureVault2024!');
             console.log('   ⚠️  Please change the admin password after first login!');
         } else {

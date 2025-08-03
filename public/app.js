@@ -9,6 +9,7 @@ class SecureVaultApp {
         this.passwords = [];
         this.selectedPasswords = new Set();
         this.apiBaseUrl = '/api';
+        this.adminToken = null; // To store the temporary admin token
         
         this.initializeApp();
     }
@@ -903,9 +904,8 @@ class SecureVaultApp {
             return;
         }
 
-        const originalToken = this.token; // Store original token
         try {
-            // Use the new public endpoint to verify admin password and get a temporary admin token
+            // This is a public endpoint, so it uses the regular apiCall method
             const verificationResponse = await this.apiCall('/auth/verify-admin', {
                 method: 'POST',
                 body: { password }
@@ -916,28 +916,50 @@ class SecureVaultApp {
                 return;
             }
 
-            // Temporarily use the admin token for subsequent requests
-            this.token = verificationResponse.data.adminToken;
+            // Store the admin token for all subsequent admin actions
+            this.adminToken = verificationResponse.data.adminToken;
 
-            // If password is correct, proceed to load admin data
-            const statsResponse = await this.apiCall('/admin/stats');
-            const usersResponse = await this.apiCall('/admin/users');
-            const deletedUsersResponse = await this.apiCall('/admin/deleted-users');
-            const restoredUsersResponse = await this.apiCall('/admin/restored-users');
+            // If password is correct, proceed to load admin data using the new admin-specific API call helper
+            const statsResponse = await this.apiAdminCall('/admin/stats');
+            const usersResponse = await this.apiAdminCall('/admin/users');
+            const deletedUsersResponse = await this.apiAdminCall('/admin/deleted-users');
+            const restoredUsersResponse = await this.apiAdminCall('/admin/restored-users');
 
             if (statsResponse.success && usersResponse.success) {
                 this.renderAdminPanel(statsResponse.data, usersResponse.data.users, deletedUsersResponse.data?.deletedUsers || [], restoredUsersResponse.data?.restoredUsers || []);
             }
         } catch (error) {
             console.error('Failed to load admin data:', error);
-            const errorMessage = error.message || 'Failed to load admin panel data.';
+            const errorMessage = error.message || 'Failed to load admin panel data. Your admin session may have expired.';
             alert(errorMessage);
-        } finally {
-            // IMPORTANT: Restore the original user's token
-            this.token = originalToken;
+            // Ensure admin token is cleared on failure
+            this.adminToken = null;
         }
     }
 
+    /**
+     * A helper method for making API calls that require admin privileges.
+     * It temporarily uses the stored admin token for the request.
+     */
+    async apiAdminCall(endpoint, options = {}) {
+        if (!this.adminToken) {
+            alert('Admin session has expired or is invalid. Please reopen the admin panel to re-authenticate.');
+            this.hideAdminPanel();
+            throw new Error('Admin token not available.');
+        }
+
+        // Temporarily swap the main token with the admin token for this specific call
+        const originalToken = this.token;
+        this.token = this.adminToken;
+
+        try {
+            // The existing apiCall method will now use the admin token
+            return await this.apiCall(endpoint, options);
+        } finally {
+            // Always restore the original user's token after the call
+            this.token = originalToken;
+        }
+    }
     renderAdminPanel(stats, users, deletedUsers, restoredUsers) {
         const adminPanel = document.createElement('div');
         adminPanel.className = 'admin-panel-overlay';
