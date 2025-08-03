@@ -49,12 +49,34 @@ app.use(limiter);
 app.use(compression());
 
 // CORS configuration
-app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = [
+            process.env.CORS_ORIGIN,
+            'http://localhost:3000',
+            'http://127.0.0.1:3000'
+        ].filter(Boolean);
+        
+        // In production, also allow the Render app URL
+        if (process.env.NODE_ENV === 'production' && process.env.RENDER_EXTERNAL_URL) {
+            allowedOrigins.push(process.env.RENDER_EXTERNAL_URL);
+        }
+
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`Origin '${origin}' is not allowed by CORS`));
+        }
+    },
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE'
+};
+
+app.use(cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -63,15 +85,69 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI, {
-    serverSelectionTimeoutMS: 10000
-})
+// --- Database Connection ---
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+    console.error('❌ FATAL ERROR: MONGODB_URI environment variable is not set.');
+    console.error('💡 For local development: mongodb://localhost:27017/SecureVault');
+    console.error('💡 For production: mongodb+srv://username:password@cluster.mongodb.net/securevault');
+    process.exit(1);
+}
+
+// Validate MongoDB URI format
+const isValidMongoURI = (uri) => {
+    return uri.startsWith('mongodb://') || uri.startsWith('mongodb+srv://');
+};
+
+if (!isValidMongoURI(MONGODB_URI)) {
+    console.error('❌ FATAL ERROR: Invalid MongoDB URI format.');
+    console.error('💡 URI should start with mongodb:// or mongodb+srv://');
+    process.exit(1);
+}
+
+// Validate that srv URIs do not contain a port, which is a common mistake.
+if (MONGODB_URI.startsWith('mongodb+srv://')) {
+    const hostPart = MONGODB_URI.split('/')[2] || '';
+    if (hostPart.includes(':')) {
+        console.error('❌ FATAL ERROR: Invalid mongodb+srv URI. A port number cannot be specified in an srv connection string.');
+        process.exit(1);
+    }
+}
+
+// For debugging connection issues, log the URI without credentials.
+const maskedURI = MONGODB_URI.includes('@') 
+    ? MONGODB_URI.replace(/:([^:@]+)@/, ':<password>@')
+    : MONGODB_URI;
+console.log(`🔗 Attempting to connect to MongoDB: ${maskedURI}`);
+
+// Database connection with improved error handling
+const connectOptions = {
+    serverSelectionTimeoutMS: 30000, // Increased timeout for cloud connections
+    socketTimeoutMS: 45000,
+    maxPoolSize: 10,
+    retryWrites: true,
+    w: 'majority'
+};
+
+mongoose.connect(MONGODB_URI, connectOptions)
 .then(() => {
     console.log('✅ Connected to MongoDB successfully');
+    console.log(`📊 Database: ${mongoose.connection.name}`);
+    console.log(`🌐 Host: ${mongoose.connection.host}`);
 })
 .catch((error) => {
-    console.error('❌ MongoDB connection error:', error);
+    console.error('❌ MongoDB connection error:', error.message);
+    
+    // Provide helpful error messages
+    if (error.message.includes('ENOTFOUND')) {
+        console.error('💡 DNS resolution failed. Check your MongoDB URI and internet connection.');
+    } else if (error.message.includes('authentication failed')) {
+        console.error('💡 Authentication failed. Check your username and password.');
+    } else if (error.message.includes('timeout')) {
+        console.error('💡 Connection timeout. Check your network and MongoDB service status.');
+    }
+    
     process.exit(1);
 });
 
@@ -115,9 +191,12 @@ process.on('SIGINT', async () => {
 
 // Start server
 app.listen(PORT, () => {
+    const environment = process.env.NODE_ENV || 'development';
+    const runningUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+
     console.log(`🚀 SecureVault server running on port ${PORT}`);
-    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📊 Running At: http://localhost:${PORT}/`);
+    console.log(`🌐 Environment: ${environment}`);
+    console.log(`📊 Running At: ${runningUrl}`);
 });
 
 module.exports = app;
