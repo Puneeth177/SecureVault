@@ -1004,11 +1004,16 @@ class SecureVaultApp {
                                             ${user.isLocked ? '<span class="status-locked">Locked</span>' : '<span class="status-active">Active</span>'}
                                         </td>
                                         <td class="actions-cell">
-                                            ${user.id === this.currentUser.id ? 
-                                                '<span class="action-disabled">Cannot delete self</span>' : 
-                                                `<button class="btn-small btn-danger" onclick="app.adminDeleteUser('${user.id}')">
-                                                    🗑️ Delete
-                                                </button>`
+                                            ${user.id === this.currentUser.id ?
+                                                '<span class="action-disabled">Cannot modify self</span>' :
+                                                `<div class="user-actions-container">
+                                                    <button class="btn-small ${user.isAdmin ? 'btn-warning' : 'btn-info'}" onclick="app.adminToggleAdminStatus('${user.id}')">
+                                                        ${user.isAdmin ? 'Revoke Admin' : 'Make Admin'}
+                                                    </button>
+                                                    <button class="btn-small btn-danger" onclick="app.adminDeleteUser('${user.id}')">
+                                                        🗑️ Delete
+                                                    </button>
+                                                </div>`
                                             }
                                         </td>
                                     </tr>
@@ -1184,6 +1189,30 @@ class SecureVaultApp {
             }
         } catch (error) {
             alert(`❌ Failed to clear history: ${error.message}`);
+        }
+    }
+
+    async adminToggleAdminStatus(userId) {
+        const userRow = document.querySelector(`tr[data-user-id="${userId}"]`);
+        const username = userRow.querySelector('.username-cell strong').textContent;
+        const isCurrentlyAdmin = userRow.querySelector('.admin-badge') !== null;
+
+        const action = isCurrentlyAdmin ? 'revoke admin privileges from' : 'grant admin privileges to';
+        const confirmation = confirm(`Are you sure you want to ${action} "${username}"?`);
+        if (!confirmation) return;
+
+        try {
+            const response = await this.apiCall(`/admin/users/${userId}/toggle-admin`, {
+                method: 'POST'
+            });
+
+            if (response.success) {
+                alert(`✅ ${response.message}`);
+                this.hideAdminPanel();
+                setTimeout(() => this.showAdminPanel(), 100); // Refresh panel
+            }
+        } catch (error) {
+            alert(`❌ Failed to update user status: ${error.message}`);
         }
     }
 

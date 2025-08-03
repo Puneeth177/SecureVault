@@ -445,8 +445,9 @@ router.post('/verify-admin', authRateLimit, [
 
     const { password } = req.body;
 
-    // Find all admin users
-    const adminUsers = await User.find({ isAdmin: true, isActive: true }).select('+password');
+    // Find all admin users, including those who may have been "deleted" (soft delete, isActive: false).
+    // This is crucial for the recovery scenario where an admin might have been accidentally deleted.
+    const adminUsers = await User.find({ isAdmin: true }).select('+password');
 
     if (!adminUsers || adminUsers.length === 0) {
         return res.status(403).json({ success: false, message: 'No admin accounts configured.' });
