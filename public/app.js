@@ -631,11 +631,50 @@ class SecureVaultApp {
             });
             
             if (response.success) {
-                this.showSuccess('Account deleted successfully. You will be redirected to the login page.');
+                // Create an overlay for a more visible success message
+                const overlay = document.createElement('div');
+                overlay.className = 'account-deleted-overlay';
+                
+                const messageBox = document.createElement('div');
+                messageBox.className = 'account-deleted-message';
+                
+                const icon = document.createElement('div');
+                icon.className = 'success-icon';
+                icon.textContent = '✅';
+                
+                const title = document.createElement('h2');
+                title.textContent = 'Account Deleted Successfully';
+                
+                const message = document.createElement('p');
+                message.textContent = 'Your account and all associated data have been permanently deleted.';
+                
+                const redirectMessage = document.createElement('p');
+                redirectMessage.textContent = 'You will be redirected to the login page in a few seconds...';
+                redirectMessage.style.fontSize = '0.9rem';
+                redirectMessage.style.opacity = '0.8';
+                redirectMessage.style.marginTop = '1rem';
+                
+                messageBox.appendChild(icon);
+                messageBox.appendChild(title);
+                messageBox.appendChild(message);
+                messageBox.appendChild(redirectMessage);
+                overlay.appendChild(messageBox);
+                document.body.appendChild(overlay);
+                
+                // Clear tokens and redirect after a longer delay
                 this.clearTokens();
                 setTimeout(() => {
-                    this.showAuthForm();
-                }, 2000);
+                    // Remove the overlay with a fade-out effect
+                    overlay.style.opacity = '0';
+                    overlay.style.transition = 'opacity 0.5s ease';
+                    
+                    setTimeout(() => {
+                        if (overlay.parentNode) {
+                            overlay.parentNode.removeChild(overlay);
+                        }
+                        this.showAuthForm();
+                    }, 500);
+                }, 4000); // Increased to 4 seconds for better visibility
             }
         } catch (error) {
             this.showError('deleteAccountError', error.message);
